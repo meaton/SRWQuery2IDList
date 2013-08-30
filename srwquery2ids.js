@@ -14,13 +14,11 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 		.alias('d', 'dir') // Target directory for output file
 		.alias('f', 'format') // Output type (csv, json)
 		.alias('h', 'host') // SRW host
-		.boolean('p') // Use JSONP as output format
 		.default({'d': 'output', 'O': 'output', 'f': 'csv', 'h': 'devtools.clarin.dk'})
 		.describe('q', 'eSciDoc SRU/W query (CQL)')
 		.describe('O', 'Output file name.')
 		.describe('d', 'Target directory for output.')
 		.describe('f', 'Output file format')
-		.describe('p', 'Using JSONP (JSON with padding) format.')
 		.check(function(opts) {
 		  return true;
 		})
@@ -126,7 +124,6 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 
 	var main = function() {
 		var is_json = (argv.f == 'json');
-	   	var is_json_p = argv.p;
 	   	var is_csv = (argv.f == 'csv');
 
 	   	var file_name = argv.O;
@@ -138,7 +135,7 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 		fs.exists(file_dir, function(exists) {
 		    if(exists) {
 			if(is_json)
-	    	        	file_path = (is_json && is_json_p) ? path.join(file_dir, file_name + '.jsonp') : path.join(file_dir, file_name + '.json');
+	    	        	file_path = path.join(file_dir, file_name + '.json');
 		    	else if(is_csv)
 		    		file_path = path.join(file_dir, file_name + '.csv');
 
