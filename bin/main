@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+
+var converter = require('../srwquery2ids.js')();
+

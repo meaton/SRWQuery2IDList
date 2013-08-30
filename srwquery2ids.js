@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
 * @author Mitchell Seaton
 */
@@ -122,7 +121,7 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 		else console.log('Buffer full waiting for drain..');
 	}
 
-	var main = function() {
+ 	module.exports = main = function() {
 		var is_json = (argv.f == 'json');
 	   	var is_csv = (argv.f == 'csv');
 
@@ -160,5 +159,3 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 		    }
 	        });
 	}
-
-	main();

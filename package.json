@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Convert eSciDoc SRW query result to ID list.",
   "main": "./srwquery2json.js",
+  "bin": { "srwquery2idlist": "bin/main" },
   "dependencies": {
     "libxmljs": "~0.6.1",
     "utile": "~0.1.5",
@@ -10,7 +11,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "./srwquery2ids.js"
+    "start": "./srwquery2ids.js"
   },
   "repository": "git://github/meaton/SRWQuery2IDList",
   "author": "Mitchell Seaton",
