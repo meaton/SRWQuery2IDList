@@ -53,12 +53,14 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 
 	    // Add the items to list
 	    utile.each(items, function(val, key) {
-	        // item%{escidocID}%[{objectPID}}|{lastVersionPID}]
-	      
+	        // item%{escidocID}%[{objectPID}}|{lastVersionPID}]%{versionNo}	      
 	        var escidocID_href = val.attr('href').value();
 	        var escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
+
 	        var obj_pid = val.get('escidocItem:properties/prop:pid', ns_obj);
-	        var ver_pid = val.get('escidocItem:properties/prop:latest-version/version:pid', ns_obj);
+	        var ver_pid = val.get('escidocItem:properties/prop:version/version:pid', ns_obj);
+		var ver_no = val.get('escidocItem:properties/prop:latest-version/version:number', ns_obj).text();
+
 		var pid = null;
 		if(ver_pid != null)
 		    pid = ver_pid.text();
@@ -66,8 +68,8 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 		    pid = obj_pid.text();	
 
 		if(argv.f == 'csv')
-		    addMemberToFile(['item', escidocID, pid].join('%') + '\n', stream);
-		else if(argv.f == 'json') json_arr.push({type: 'item', systemID: escidocID, PID: pid});
+		    addMemberToFile(['item', escidocID, pid, ver_no].join('%') + '\n', stream);
+		else if(argv.f == 'json') json_arr.push({type: 'item', systemID: escidocID, PID: pid, versionNo: ver_no});
 		else throw new Error('Unsupported format:' + argv.f);
 
 	    });
