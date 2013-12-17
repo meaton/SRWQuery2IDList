@@ -3,7 +3,7 @@
 */
 var http = require('http'), fs = require('fs'), path = require('path'), utile = require('utile'), libxml = require('libxmljs');
 	var json_arr = [];
-	var srw_config = {start: 1, limit: 10};
+	var srw_config = {start: 1, limit: 100};
 	// args
 	var argv = require('optimist')
 		.usage('Convert eSciDoc SRW query results to ID list.\nUsage: $0 -q [input]')
@@ -35,6 +35,7 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 		'release':'http://escidoc.de/core/01/properties/release/',
 		'prop':'http://escidoc.de/core/01/properties/',
 		'srel':'http://escidoc.de/core/01/structural-relations/',
+		'relations':'http://www.escidoc.de/schemas/relations/0.3',
 		'xlink':'http://www.w3.org/1999/xlink' };
 
 	// Parse and pull ID data from the XMLDocument
@@ -56,10 +57,20 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 	        // item%{escidocID}%[{objectPID}}|{lastVersionPID}]%{versionNo}	      
 	        var escidocID_href = val.attr('href').value();
 	        var escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
-
+		var contentModelID_href = val.get('escidocItem:properties/srel:content-model', ns_obj).attr('href').value();
+		var contentModelID = contentModelID_href.substring(contentModelID_href.indexOf('dkclarin'), contentModelID_href.length);
 	        var obj_pid = val.get('escidocItem:properties/prop:pid', ns_obj);
 	        var ver_pid = val.get('escidocItem:properties/prop:version/version:pid', ns_obj);
 		var ver_no = val.get('escidocItem:properties/prop:latest-version/version:number', ns_obj).text();
+		var last_date = val.attr('last-modification-date').value();
+		var relation = val.get('relations:relations/relations:relation', ns_obj);
+		
+		if(relation == undefined || relation == null) { 
+			relation = "none";
+		} else {
+			relation = relation.attr('href').value();
+			relation = relation.substring(relation.indexOf('dkclarin'), relation.length);
+		}
 
 		var pid = null;
 		if(ver_pid != null)
@@ -68,8 +79,9 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 		    pid = obj_pid.text();	
 
 		if(argv.f == 'csv')
-		    addMemberToFile(['item', escidocID, pid, ver_no].join('%') + '\n', stream);
-		else if(argv.f == 'json') json_arr.push({type: 'item', systemID: escidocID, PID: pid, versionNo: ver_no});
+		    //addMemberToFile([escidocID, relation, last_date].join('%') + '\n', stream);
+		    addMemberToFile(['item', escidocID, contentModelID, pid, ver_no].join('%') + '\n', stream);
+		else if(argv.f == 'json') json_arr.push({type: 'item', systemID: escidocID, contentModelID: contentModelID, PID: pid, versionNo: ver_no});
 		else throw new Error('Unsupported format:' + argv.f);
 
 	    });

@@ -5,9 +5,9 @@
   "main": "./srwquery2json.js",
   "bin": { "srwquery2idlist": "bin/main" },
   "dependencies": {
-    "libxmljs": "~0.6.1",
+    "libxmljs": "~0.8.1",
     "utile": "~0.1.5",
-    "optimist": "~0.3.4",
+    "optimist": "~0.3.4"
   },
   "devDependencies": {},
   "scripts": {
@@ -15,5 +15,5 @@
   },
   "repository": "git://github/meaton/SRWQuery2IDList",
   "author": "Mitchell Seaton",
-  "license": "BSD"
+  "license": "MIT"
 }
