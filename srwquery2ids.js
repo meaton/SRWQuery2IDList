@@ -2,10 +2,16 @@
 * @author Mitchell Seaton
 */
 var http = require('http'), fs = require('fs'), path = require('path'), utile = require('utile'), libxml = require('libxmljs');
+	
 	var json_arr = [];
 	var srw_config = {start: 1, limit: 100};
+	
 	// args
-	var argv = require('optimist')
+	var argv = require('minimist')(process.argv.slice(2), { string: ['q, O, d, f, h'], boolean: 's', alias: {'q':'query', 'O':'output', 'd':'dir', 'f':'format', 'h':'host', 's':'stream'}, default: { 'd':'output', 'O':'output', 'f':'csv', 'h':'devtools.clarin.dk' }});
+
+	var delimiter = (argv.f == 'tsv') ? '\t' : '%'; // TODO: custom delimiter
+
+/*	var argv = require('optimist')
 		.usage('Convert eSciDoc SRW query results to ID list.\nUsage: $0 -q [input]')
 		.demand(['q'])
 		.alias('q', 'query') // File eSciDoc SRW XML
@@ -22,7 +28,7 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 		  return true;
 		})
 		.argv;
-
+*/
 
 	// eSciDoc 1.3.x SRW 
 	var ns_obj = {'sru-zr':'http://www.loc.gov/zing/srw/',
@@ -73,30 +79,32 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 		}
 
 		var pid = null;
+		
 		if(ver_pid != null)
 		    pid = ver_pid.text();
 		else
 		    pid = obj_pid.text();	
 
-		if(argv.f == 'csv')
-		    //addMemberToFile([escidocID, relation, last_date].join('%') + '\n', stream);
-		    addMemberToFile(['item', escidocID, contentModelID, pid, ver_no].join('%') + '\n', stream);
-		else if(argv.f == 'json') json_arr.push({type: 'item', systemID: escidocID, contentModelID: contentModelID, PID: pid, versionNo: ver_no});
-		else throw new Error('Unsupported format:' + argv.f);
+		if(argv.f == 'csv' || argv.f == 'tsv')
+		    addMemberToFile(['item', escidocID, contentModelID, pid, ver_no].join(delimiter) + '\n', stream);
+		else if(argv.f == 'json') 
+		    json_arr.push({type: 'item', systemID: escidocID, contentModelID: contentModelID, PID: pid, versionNo: ver_no});
+		else 
+		    throw new Error('Unsupported format:' + argv.f);
 
 	    });
 
 	    // TODO Handle containers array
-	    utile.each(containers, function(val, key) {
-	    });
+	    utile.each(containers, function(val, key) {});
 
 	    // iterate over complete SRW result set
 	    if(Number(totalRecords) >= (srw_config.limit+srw_config.start)) { 
 		srw_config.start += srw_config.limit;
 		retrieveSRWResult(srw_options(argv.q, srw_config), stream);
 	    } else {
-		if(argv.f == 'json') addMemberToFile(JSON.stringify(json_arr), stream);
-		stream.destroySoon();
+		if(argv.f == 'json') 
+		    addMemberToFile(JSON.stringify(json_arr), stream);
+		if(stream instanceof fs.WriteStream) stream.destroySoon();
 	    }
       	}
 	    
@@ -131,45 +139,55 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 
 	// append data to output file
 	var addMemberToFile = function(data, stream) {
-		if(stream.write(data)) console.log('Data written: ' + data);
-		else console.log('Buffer full waiting for drain..');
+		if(stream != null) 
+		    if(stream.write(data)) console.log('Data written: ' + data);
+		    else console.log('Buffer full waiting for drain..');
+		else
+		    process.send(data);
 	}
 
- 	module.exports = main = function() {
+ 	var run = function() {
 		var is_json = (argv.f == 'json');
 	   	var is_csv = (argv.f == 'csv');
+		var is_tsv = (argv.f == 'tsv');
 
 	   	var file_name = argv.O;
 	  	var file_dir = argv.d;
 	  	var file_path = null;
 
 		var search_cql = argv.q
-		
-		fs.exists(file_dir, function(exists) {
-		    if(exists) {
-			if(is_json)
-	    	        	file_path = path.join(file_dir, file_name + '.json');
-		    	else if(is_csv)
-		    		file_path = path.join(file_dir, file_name + '.csv');
+		var stream = null;	
 
-		    var stream = fs.createWriteStream(file_path, {encoding: 'utf8'});
-		    stream.on('error', function(err) {
-			if (err) throw err;
-	    	    });
-		    stream.on('drain', function() {
-		        console.log('Data drained from buffer to file:' + file_path);
-		    });
-		    stream.on('close', function() {
-			console.log('Closing file stream.');
-		    });
+		if(!argv.s)		
+		    fs.existsSync(file_dir, function(exists) {
+		        if(exists) {
+			    if(is_json)
+	    	        	file_path = path.join(file_dir, file_name + '.json');
+		    	    else if(is_csv)
+		    		file_path = path.join(file_dir, file_name + '.csv');
+			    else if(is_tsv)
+				file_path = path.join(file_dir, file_name + '.tsv');
+
+		    	stream = fs.createWriteStream(file_path, {encoding: 'utf8'});
+		    	stream.on('error', function(err) {
+			    if (err) throw err;
+	    	    	});
+		    	stream.on('drain', function() {
+		            console.log('Data drained from buffer to file:' + file_path);
+		        });
+		    	stream.on('close', function() {
+			    console.log('Closing file stream.');
+		    	});
 
 			console.log('Using query: ' + search_cql);
-			retrieveSRWResult(srw_options(search_cql, srw_config), stream);
-		
-    
 	            } else {
 			console.log('Target directory doesn\'t exist: ' + file_dir);
 			fs.mkdir(file_dir, function(err) { if(err) throw err; console.log('Created directory: ' + file_dir); main(); });
 		    }
 	        });
+	    
+	    retrieveSRWResult(srw_options(search_cql, srw_config), stream);
 	}
+
+	module.exports = run;
+	run();
