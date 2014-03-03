@@ -16,7 +16,7 @@ app.get('/srwquery2idlist', function(req, res) {
     query.on('exit', function(code) {
 	if(code == 0) {
 	    res.set({
-  		'Content-Type': 'text/tab-seperated-values',
+  		'Content-Type': 'text/tab-separated-values',
   		'Content-Length': file_data.length});
 	    res.send(new Buffer(file_data));
 	} else res.send(500, { error: 'error occurred!'});
