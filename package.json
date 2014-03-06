@@ -7,7 +7,8 @@
   "dependencies": {
     "libxmljs": "~0.8.1",
     "utile": "~0.1.5",
-    "optimist": "~0.3.4"
+    "express": "~3.4.8",
+    "minimist": "~0.0.8"
   },
   "devDependencies": {},
   "scripts": {
