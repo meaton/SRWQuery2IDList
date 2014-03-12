@@ -158,15 +158,15 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 		var search_cql = argv.q
 		var stream = null;	
 
-		if(!argv.s)		
-		    fs.existsSync(file_dir, function(exists) {
-		        if(exists) {
-			    if(is_json)
-	    	        	file_path = path.join(file_dir, file_name + '.json');
-		    	    else if(is_csv)
-		    		file_path = path.join(file_dir, file_name + '.csv');
-			    else if(is_tsv)
-				file_path = path.join(file_dir, file_name + '.tsv');
+		if(!argv.s) {	
+		    console.log("Exists?: " + file_dir);
+		    if(fs.existsSync(file_dir)) {
+			if(is_json)
+	    	            file_path = path.join(file_dir, file_name + '.json');
+		    	else if(is_csv)
+		    	    file_path = path.join(file_dir, file_name + '.csv');
+			else if(is_tsv)
+			    file_path = path.join(file_dir, file_name + '.tsv');
 
 		    	stream = fs.createWriteStream(file_path, {encoding: 'utf8'});
 		    	stream.on('error', function(err) {
@@ -182,11 +182,12 @@ var http = require('http'), fs = require('fs'), path = require('path'), utile = 
 			console.log('Using query: ' + search_cql);
 	            } else {
 			console.log('Target directory doesn\'t exist: ' + file_dir);
-			fs.mkdir(file_dir, function(err) { if(err) throw err; console.log('Created directory: ' + file_dir); main(); });
+			fs.mkdir(file_dir, function(err) { if(err) throw err; console.log('Created directory: ' + file_dir); run(); });
 		    }
-	        });
-	    
-	    retrieveSRWResult(srw_options(search_cql, srw_config), stream);
+	     }
+
+	    if(argv.s || stream != null) 
+	    	retrieveSRWResult(srw_options(search_cql, srw_config), stream);
 	}
 
 	module.exports = run;
