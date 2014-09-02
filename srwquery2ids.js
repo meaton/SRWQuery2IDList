@@ -21,7 +21,7 @@ var argv = require('minimist')(process.argv.slice(2), {
     'f': 'format',
     'h': 'host',
     's': 'stream',
-		'i': 'include-all'
+		'i': 'include-all',
     'a': 'include-anno'
   },
   default: {
@@ -54,17 +54,16 @@ var ns_obj = {
 
 var getItemProperties = function(item) {
   var props = {}; // Properties object
-
-  var escidocID_href = val.attr('href').value();
+  var escidocID_href = item.attr('href').value();
   props.escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
-  var contentModelID_href = val.get('escidocItem:properties/srel:content-model', ns_obj).attr('href').value();
+  var contentModelID_href = item.get('escidocItem:properties/srel:content-model', ns_obj).attr('href').value();
   props.contentModelID = contentModelID_href.substring(contentModelID_href.indexOf('dkclarin'), contentModelID_href.length);
 
-  var obj_pid = val.get('escidocItem:properties/prop:pid', ns_obj);
-  var ver_pid = val.get('escidocItem:properties/prop:version/version:pid', ns_obj);
-  props.ver_no = val.get('escidocItem:properties/prop:latest-version/version:number', ns_obj).text();
+  var obj_pid = item.get('escidocItem:properties/prop:pid', ns_obj);
+  var ver_pid = item.get('escidocItem:properties/prop:version/version:pid', ns_obj);
+  props.ver_no = item.get('escidocItem:properties/prop:latest-version/version:number', ns_obj).text();
 
-  var last_date = val.attr('last-modification-date').value();
+  var last_date = item.attr('last-modification-date').value();
 
   props.pid = null;
 
@@ -93,7 +92,7 @@ var parse = function(doc, stream) {
   // Add the items to list
   utile.each(items, function(val, key) {
     // CSV format: item%{escidocID}%[{objectPID}}|{lastVersionPID}]%{versionNo}
-    if (!annotationOnly) {
+    if (!annotationsOnly) {
       addMember(getItemProperties(val));
     }
 
