@@ -4,6 +4,7 @@ var http = require('http'),
   utile = require('utile'),
   libxml = require('libxmljs');
 
+var stream = null;
 var json_arr = [];
 var srw_config = { // TODO: limit options
   start: 1,
@@ -216,8 +217,6 @@ var run = function() {
   var file_name = argv.O;
   var file_dir = argv.d;
   var file_path = null;
-
-  var stream = null;
 
   if (!argv.s) {
     console.log("Exists?: " + file_dir);
