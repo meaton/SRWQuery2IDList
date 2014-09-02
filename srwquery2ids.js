@@ -55,13 +55,16 @@ var ns_obj = {
 
 var getItemProperties = function(item) {
   var props = {}; // Properties object
-  var escidocID_href = item.attr('href').value();
+
+	var escidocID_href = item.attr('href').value();
   props.escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
+
   var contentModelID_href = item.get('escidocItem:properties/srel:content-model', ns_obj).attr('href').value();
   props.contentModelID = contentModelID_href.substring(contentModelID_href.indexOf('dkclarin'), contentModelID_href.length);
 
   var obj_pid = item.get('escidocItem:properties/prop:pid', ns_obj);
-  var ver_pid = item.get('escidocItem:properties/prop:version/version:pid', ns_obj);
+
+	var ver_pid = item.get('escidocItem:properties/prop:version/version:pid', ns_obj);
   props.ver_no = item.get('escidocItem:properties/prop:latest-version/version:number', ns_obj).text();
 
   var last_date = item.attr('last-modification-date').value();
@@ -70,8 +73,10 @@ var getItemProperties = function(item) {
 
   if (ver_pid != null)
     props.pid = ver_pid.text();
-  else
+  else if(obj_pid != null)
     props.pid = obj_pid.text();
+	else
+		console.error('No PID value found for item: ' + props.escidocID);
 
   return props;
 }
@@ -109,7 +114,7 @@ var parse = function(doc, stream) {
             console.log('Found Annotation: ' + relationObjID);
 
             // retrieve properties for Annotation item from eSciDoc REST
-            var annoPropsItem = retrieveItemProperties(relationObjID, function(callback) {
+            retrieveItemProperties(relationObjID, function(annoPropsItem) {
               var props = getItemProperties(annoPropsItem);
               addMember(props); // add annotation member to file
             });
