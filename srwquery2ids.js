@@ -245,7 +245,7 @@ var run = function() {
       });
       stream.on('drain', function() {
         console.log('Data drained from buffer to file:' + file_path);
-      	stream.destorySoon();
+      	stream.end();
 			});
       stream.on('close', function() {
         console.log('Closing file stream.');
