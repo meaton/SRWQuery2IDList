@@ -35,6 +35,9 @@ var argv = require('minimist')(process.argv.slice(2), {
 
 var delimiter = (argv.f == 'tsv') ? '\t' : '%'; // TODO: custom delimiter
 
+console.log('include all: ' + argv.i);
+console.log('include anno: ' + argv.a);
+
 var annotationsOnly = (!argv.i && argv.a);
 
 // eSciDoc 1.3.x SRW Namespaces
@@ -58,18 +61,18 @@ var getItemProperties = function(item) {
 
 	var escidocID_href = item.attr('href').value();
   props.escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
+	if(props.escidocID.indexOf('properties') != -1) props.escidocID = props.escidocID.substring(0, props.escidocID.indexOf('properties')-1);
 
-  var contentModelID_href = item.get('escidocItem:properties/srel:content-model', ns_obj).attr('href').value();
+  var contentModelID_href = item.get('//srel:content-model', ns_obj).attr('href').value();
   props.contentModelID = contentModelID_href.substring(contentModelID_href.indexOf('dkclarin'), contentModelID_href.length);
 
-  var obj_pid = item.get('escidocItem:properties/prop:pid', ns_obj);
-
-	var ver_pid = item.get('escidocItem:properties/prop:version/version:pid', ns_obj);
-  props.ver_no = item.get('escidocItem:properties/prop:latest-version/version:number', ns_obj).text();
+  var obj_pid = item.get('//prop:pid', ns_obj);
+	var ver_pid = item.get('//prop:version/version:pid', ns_obj);
+  props.ver_no = item.get('//prop:latest-version/version:number', ns_obj).text();
 
   var last_date = item.attr('last-modification-date').value();
 
-  props.pid = null;
+  props.pid = "none";
 
   if (ver_pid != null)
     props.pid = ver_pid.text();
@@ -82,7 +85,7 @@ var getItemProperties = function(item) {
 }
 
 // Parse and pull ID data from the XMLDocument
-var parse = function(doc, stream) {
+var parse = function(doc) {
   var totalRecords = doc.get('//sru-zr:numberOfRecords', ns_obj).text();
   var items = doc.find('//escidocItem:item', ns_obj);
   var containers = doc.find('//escidocContainer:container', ns_obj);
@@ -115,7 +118,8 @@ var parse = function(doc, stream) {
 
             // retrieve properties for Annotation item from eSciDoc REST
             retrieveItemProperties(relationObjID, function(annoPropsItem) {
-              var props = getItemProperties(annoPropsItem);
+							console.log('props xml: ' + annoPropsItem.toString());
+              var props = getItemProperties(annoPropsItem.root());
               addMember(props); // add annotation member to file
             });
           }
@@ -128,16 +132,16 @@ var parse = function(doc, stream) {
   utile.each(containers, function(val, key) {});
 
   // iterate over complete SRW result set
-  if (Number(totalRecords) >= (srw_config.limit + srw_config.start)) {
+  if(Number(totalRecords) >= (srw_config.limit + srw_config.start)) {
     srw_config.start += srw_config.limit;
     retrieveSRWResult(srw_config, function(xml) {
-      parse(xml, stream);
+      parse(xml);
     });
   } else {
-    if (argv.f == 'json')
+    if(argv.f == 'json')
       addMemberToFile(JSON.stringify(json_arr), stream); // write JSON object to output file
-    if (stream instanceof fs.WriteStream)
-      stream.destroySoon();
+    //if(stream instanceof fs.WriteStream)
+      //stream.destroySoon();
   }
 }
 
@@ -192,7 +196,7 @@ var ir_options = function(escidocID, path) {
 // append props to output file
 var addMember = function(props) {
   if (argv.f == 'csv' || argv.f == 'tsv')
-    addMemberToFile(['item', props.escidocID, props.contentModelID, props.pid, props.ver_no].join(delimiter) + '\n', stream);
+    addMemberToFile(['item', props.escidocID, props.contentModelID, props.pid, props.ver_no].join(delimiter) + '\n');
   else if (argv.f == 'json') // write output to JSON object
     json_arr.push({
 		  type: 'item',
@@ -206,7 +210,7 @@ var addMember = function(props) {
 }
 
 // write output to file
-var addMemberToFile = function(data, stream) {
+var addMemberToFile = function(data) {
   if (stream != null)
     if (stream.write(data)) console.log('Data written: ' + data);
     else console.log('Buffer full waiting for drain..');
@@ -241,7 +245,8 @@ var run = function() {
       });
       stream.on('drain', function() {
         console.log('Data drained from buffer to file:' + file_path);
-      });
+      	stream.destorySoon();
+			});
       stream.on('close', function() {
         console.log('Closing file stream.');
       });
@@ -259,7 +264,7 @@ var run = function() {
 
   if (argv.s || stream != null)
     retrieveSRWResult(srw_config, function(xml) {
-      parse(xml, stream);
+      parse(xml);
     });
 }
 
