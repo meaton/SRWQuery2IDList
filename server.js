@@ -10,7 +10,7 @@ app.get('/srwquery2idlist', function(req, res) {
   // inc all annotations
   if(req.query.annos == 'true' || req.query.annos == null) queryParams.push('-a');
 
-  req.setSocketKeepAlive(true); //keep-alive
+  res.setTimeout(0); //might take a while
 
   var query = fork(__dirname + '/srwquery2ids.js', queryParams);
   var file_data = new String();
