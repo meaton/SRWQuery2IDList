@@ -2,7 +2,6 @@ var app = require('express')(),
   fork = require('child_process').fork;
 
 app.get('/srwquery2idlist', function(req, res) {
-  // TODO: support addition of Annotations (via relations)
   var format = (req.query.format != null) ? req.query.format : 'tsv';
 
   var queryParams = ['-q', req.query.query, '-f', format, '-s'];
@@ -10,6 +9,8 @@ app.get('/srwquery2idlist', function(req, res) {
   if(req.query.items == 'true' || req.query.items == null) queryParams.push('-i');
   // inc all annotations
   if(req.query.annos == 'true' || req.query.annos == null) queryParams.push('-a');
+
+  req.setSocketKeepAlive(true); //keep-alive
 
   var query = fork(__dirname + '/srwquery2ids.js', queryParams);
   var file_data = new String();
