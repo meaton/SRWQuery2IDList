@@ -14,7 +14,7 @@ var srw_config = { // TODO: limit options
 // args
 var argv = require('minimist')(process.argv.slice(2), {
   string: ['q, O, d, f, h'],
-  boolean: ['s', 'i', 'a', 'b'],
+  boolean: ['s', 'i', 'a'],
   alias: {
     'q': 'query',
     'O': 'output',
@@ -24,7 +24,6 @@ var argv = require('minimist')(process.argv.slice(2), {
     's': 'stream',
 		'i': 'include-all',
     'a': 'include-anno',
-    'b': 'include-version-pids'
   },
   default: {
     'd': 'output',
