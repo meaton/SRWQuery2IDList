@@ -14,7 +14,7 @@ var srw_config = { // TODO: limit options
 // args
 var argv = require('minimist')(process.argv.slice(2), {
   string: ['q, O, d, f, h'],
-  boolean: ['s', 'i', 'a'],
+  boolean: ['s', 'i', 'a', 'b'],
   alias: {
     'q': 'query',
     'O': 'output',
@@ -23,7 +23,8 @@ var argv = require('minimist')(process.argv.slice(2), {
     'h': 'host',
     's': 'stream',
 		'i': 'include-all',
-    'a': 'include-anno'
+    'a': 'include-anno',
+    'b': 'include-version-pids'
   },
   default: {
     'd': 'output',
@@ -56,19 +57,19 @@ var ns_obj = {
   'xlink': 'http://www.w3.org/1999/xlink'
 };
 
-var getItemProperties = function(item) {
+var getItemProperties = function(item, callback) {
   var props = {}; // Properties object
 
 	var escidocID_href = item.attr('href').value();
   props.escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
 	if(props.escidocID.indexOf('properties') != -1) props.escidocID = props.escidocID.substring(0, props.escidocID.indexOf('properties')-1);
 
-  var contentModelID_href = item.get('//srel:content-model', ns_obj).attr('href').value();
+  var contentModelID_href = item.get('escidocItem:properties/srel:content-model', ns_obj).attr('href').value();
   props.contentModelID = contentModelID_href.substring(contentModelID_href.indexOf('dkclarin'), contentModelID_href.length);
 
-  var obj_pid = item.get('//prop:pid', ns_obj);
-	var ver_pid = item.get('//prop:version/version:pid', ns_obj);
-  props.ver_no = item.get('//prop:latest-version/version:number', ns_obj).text();
+  var obj_pid = item.get('escidocItem:properties/prop:pid', ns_obj);
+	var ver_pid = item.get('escidocItem:properties/prop:version/version:pid', ns_obj);
+  props.ver_no = item.get('escidocItem:properties/prop:latest-version/version:number', ns_obj).text();
 
   var last_date = item.attr('last-modification-date').value();
 
@@ -81,7 +82,7 @@ var getItemProperties = function(item) {
 	else
 		console.error('No PID value found for item: ' + props.escidocID);
 
-  return props;
+  callback(props); // add to member
 }
 
 // Parse and pull ID data from the XMLDocument
@@ -99,14 +100,14 @@ var parse = function(doc) {
   else console.error('Found 0 containers in XMLDocument.');
 
   // Add the items to list
-  utile.each(items, function(val, key) {
+  items.forEach(function(item){
     // CSV format: item%{escidocID}%[{objectPID}}|{lastVersionPID}]%{versionNo}
     if (!annotationsOnly) {
-      addMember(getItemProperties(val));
+      getItemProperties(item, addMember);
     }
 
-		if(argv.a){
-      var relations = val.find('relations:relations/relations:relation', ns_obj);
+		if(argv.a && item != null){
+      var relations = item.find('relations:relations/relations:relation', ns_obj);
       relations.forEach(function(relation) {
         if (relation != undefined || relation != null) {
           relation_type = relation.attr('predicate').value();
@@ -119,8 +120,7 @@ var parse = function(doc) {
             // retrieve properties for Annotation item from eSciDoc REST
             retrieveItemProperties(relationObjID, function(annoPropsItem) {
 							console.log('props xml: ' + annoPropsItem.toString());
-              var props = getItemProperties(annoPropsItem.root());
-              addMember(props); // add annotation member to file
+              getItemProperties(annoPropsItem.root(), addMember); // add annotation member to file
             });
           }
         }
@@ -129,7 +129,7 @@ var parse = function(doc) {
   });
 
   // TODO: Handle containers array
-  utile.each(containers, function(val, key) {});
+  containers.forEach(function(container) {});
 
   // iterate over complete SRW result set
   if(Number(totalRecords) >= (srw_config.limit + srw_config.start)) {
