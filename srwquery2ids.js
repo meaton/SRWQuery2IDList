@@ -101,7 +101,7 @@ var validatePIDVersion = function(props, callback) {
     if(sProps.length < 5)
       return true; // object PID
     else
-      return parseInt(sProps[sProps.length-1], 16) == props.ver_no);
+      return (parseInt(sProps[sProps.length-1], 16) == props.ver_no);
   } else
     return true;
 }
