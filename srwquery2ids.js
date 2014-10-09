@@ -30,8 +30,7 @@ var argv = require('minimist')(process.argv.slice(2), {
     'd': 'output',
     'O': 'output',
     'f': 'csv',
-    'h': 'devtools.clarin.dk',
-    'p': true
+    'h': 'devtools.clarin.dk'
   }
 });
 
@@ -86,21 +85,23 @@ var getItemProperties = function(item, callback) {
 	else
 		console.error('No PID value found for item: ' + props.escidocID);
 
-  if(validate)
-    if(validatePIDVersion(props, callback)) console.log('validated found Handle PID: ' + props.pid); // add to member
-  else
+  if(validate) {
+    if(validatePIDVersion(props)) { // PID must be in format of version PID
+      console.log('validated found Handle PID: ' + props.pid); // add to member
+      callback(props);
+    }
+  } else
     callback(props);
 }
 
+// Validate HDL PIDs against the version no ref (CLARIN-DK based PID implementaton)
 var validatePIDVersion = function(props, callback) {
   if(props.pid.indexOf('hdl:') == 0) {
     var sProps = props.pid.split('-');
-    if(sProps[sProps.length-1] != parseInt(props.ver_no, 16))
-      return false;
-  }
-
-  callback(props);
-  return true;
+    if(sProps.length < 5) return true; // object PID
+    else return (sProps[sProps.length-1] == props.ver_no.toString(16))
+  } else
+    return true;
 }
 
 // Parse and pull ID data from the XMLDocument
