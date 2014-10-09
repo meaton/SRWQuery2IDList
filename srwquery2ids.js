@@ -14,7 +14,7 @@ var srw_config = { // TODO: limit options
 // args
 var argv = require('minimist')(process.argv.slice(2), {
   string: ['q, O, d, f, h'],
-  boolean: ['s', 'i', 'a'],
+  boolean: ['s', 'i', 'a', 'p'],
   alias: {
     'q': 'query',
     'O': 'output',
@@ -24,19 +24,23 @@ var argv = require('minimist')(process.argv.slice(2), {
     's': 'stream',
 		'i': 'include-all',
     'a': 'include-anno',
+    'p': 'validate-pids',
   },
   default: {
     'd': 'output',
     'O': 'output',
     'f': 'csv',
     'h': 'devtools.clarin.dk',
+    'p': true
   }
 });
 
 var delimiter = (argv.f == 'tsv') ? '\t' : '%'; // TODO: custom delimiter
+var validate = argv.p;
 
 console.log('include all: ' + argv.i);
 console.log('include anno: ' + argv.a);
+console.log('validate: ' + validate);
 
 var annotationsOnly = (!argv.i && argv.a);
 
@@ -82,7 +86,21 @@ var getItemProperties = function(item, callback) {
 	else
 		console.error('No PID value found for item: ' + props.escidocID);
 
-  callback(props); // add to member
+  if(validate)
+    if(validatePIDVersion(props, callback)) console.log('validated found Handle PID: ' + props.pid); // add to member
+  else
+    callback(props);
+}
+
+var validatePIDVersion = function(props, callback) {
+  if(props.pid.startsWith('hdl:')) {
+    var sProps = props.pid.split('-');
+    if(sProps[sProps.length-1] != parseInt(props.ver_no, 16))
+      return false;
+  }
+
+  callback(props);
+  return true;
 }
 
 // Parse and pull ID data from the XMLDocument
