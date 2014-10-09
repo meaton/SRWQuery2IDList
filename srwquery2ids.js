@@ -120,7 +120,7 @@ var parse = function(doc) {
             // retrieve properties for Annotation item from eSciDoc REST
             retrieveItemProperties(relationObjID, function(annoPropsItem) {
 							console.log('props xml: ' + annoPropsItem.toString());
-              getItemProperties(annoPropsItem, addMember); // add annotation member to file
+              getItemProperties(annoPropsItem.root(), addMember); // add annotation member to file
             });
           }
         }
