@@ -93,7 +93,7 @@ var getItemProperties = function(item, callback) {
 }
 
 var validatePIDVersion = function(props, callback) {
-  if(props.pid.startsWith('hdl:')) {
+  if(props.pid.indexOf('hdl:') == 0) {
     var sProps = props.pid.split('-');
     if(sProps[sProps.length-1] != parseInt(props.ver_no, 16))
       return false;
