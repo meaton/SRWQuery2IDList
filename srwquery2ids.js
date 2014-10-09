@@ -58,17 +58,18 @@ var ns_obj = {
 
 var getItemProperties = function(item, callback) {
   var props = {}; // Properties object
+  var xpathRoot = (item.name() == 'item') ? 'escidocItem:properties/' : '';
 
 	var escidocID_href = item.attr('href').value();
   props.escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
 	if(props.escidocID.indexOf('properties') != -1) props.escidocID = props.escidocID.substring(0, props.escidocID.indexOf('properties')-1);
 
-  var contentModelID_href = item.get('escidocItem:properties/srel:content-model', ns_obj).attr('href').value();
+  var contentModelID_href = item.get(xpathRoot + 'srel:content-model', ns_obj).attr('href').value();
   props.contentModelID = contentModelID_href.substring(contentModelID_href.indexOf('dkclarin'), contentModelID_href.length);
 
-  var obj_pid = item.get('escidocItem:properties/prop:pid', ns_obj);
-	var ver_pid = item.get('escidocItem:properties/prop:version/version:pid', ns_obj);
-  props.ver_no = item.get('escidocItem:properties/prop:latest-version/version:number', ns_obj).text();
+  var obj_pid = item.get(xpathRoot + 'prop:pid', ns_obj);
+	var ver_pid = item.get(xpathRoot + 'prop:version/version:pid', ns_obj);
+  props.ver_no = item.get(xpathRoot + 'prop:latest-version/version:number', ns_obj).text();
 
   var last_date = item.attr('last-modification-date').value();
 
@@ -119,7 +120,7 @@ var parse = function(doc) {
             // retrieve properties for Annotation item from eSciDoc REST
             retrieveItemProperties(relationObjID, function(annoPropsItem) {
 							console.log('props xml: ' + annoPropsItem.toString());
-              getItemProperties(annoPropsItem.root(), addMember); // add annotation member to file
+              getItemProperties(annoPropsItem, addMember); // add annotation member to file
             });
           }
         }
