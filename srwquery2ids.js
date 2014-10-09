@@ -98,8 +98,10 @@ var getItemProperties = function(item, callback) {
 var validatePIDVersion = function(props, callback) {
   if(props.pid.indexOf('hdl:') == 0) {
     var sProps = props.pid.split('-');
-    if(sProps.length < 5) return true; // object PID
-    else return (sProps[sProps.length-1] == props.ver_no.toString(16))
+    if(sProps.length < 5)
+      return true; // object PID
+    else
+      return parseInt(sProps[sProps.length-1], 16) == props.ver_no);
   } else
     return true;
 }
