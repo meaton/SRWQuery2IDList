@@ -151,8 +151,16 @@ var parse = function(doc) {
                   if(items.indexOf(index) >= items.length)
                     if(Number(totalRecords) < (srw_config.limit + srw_config.start))
                       if(argv.f == 'json')
-                        addMemberToFile(JSON.stringify(json_arr), stream);
+                        createStream(function() { addMemberToFile(JSON.stringify(json_arr)); });
                 }); // add annotation member to file
+            });
+          } else if (relation_type.indexOf('IsAnnotationOf') != -1
+                     || relation_type.indexOf('isDependentOf') != -1
+                     || relation_type.indexOf('hasDependent') != -1) { // add annotation member to file including parent ID (annotation)
+            retrieveItemProperties(relationObjID, function(annoPropsItem) {
+              getProperties(annoPropsItem.root(), function(propsAnno) {
+                getProperties(item, function(props) { addMember(propsAnno, props.escidocID); });
+              });
             });
           }
         }
@@ -174,7 +182,7 @@ var parse = function(doc) {
     });
   } else {
     if(!argv.a && argv.f == 'json')
-      addMemberToFile(JSON.stringify(json_arr), stream); // write JSON object to output file
+      createStream(function() { addMemberToFile(JSON.stringify(json_arr)); }); // write JSON object to output file
     //if(stream instanceof fs.WriteStream)
       //stream.destroySoon();
   }
@@ -229,16 +237,21 @@ var ir_options = function(escidocID, path) {
 };
 
 // append props to output file
-var addMember = function(props) {
-  if (argv.f == 'csv' || argv.f == 'tsv')
-    addMemberToFile([props.name, props.escidocID, props.contentModelID, props.pid, props.ver_no].join(delimiter) + '\n');
-  else if (argv.f == 'json') // write output to JSON object
+var addMember = function(props, parentID) {
+  if (argv.f == 'csv' || argv.f == 'tsv') {
+    var dataArr = [props.name, props.escidocID, props.contentModelID, props.pid, props.ver_no];
+    if(parentID != null)
+      dataArr.push(parentID);
+
+    addMemberToFile(dataArr.join(delimiter) + '\n');
+  } else if (argv.f == 'json') // write output to JSON object
     json_arr.push({
 		  type: props.name,
 		  systemID: props.escidocID,
 		  contentModelID: props.contentModelID,
 		  PID: props.pid,
-		  versionNo: props.ver_no
+		  versionNo: props.ver_no,
+      parentID: (parentID != null) ? parentID : undefined
 		});
   else
     throw new Error('Unsupported format:' + argv.f);
@@ -253,7 +266,8 @@ var addMemberToFile = function(data) {
     process.send(data);
 }
 
-var run = function() {
+var createStream = function(callback) {
+
   var is_json = (argv.f == 'json');
   var is_csv = (argv.f == 'csv');
   var is_tsv = (argv.f == 'tsv');
@@ -280,8 +294,8 @@ var run = function() {
       });
       stream.on('drain', function() {
         console.log('Data drained from buffer to file:' + file_path);
-      	stream.end();
-			});
+        stream.end();
+      });
       stream.on('close', function() {
         console.log('Closing file stream.');
       });
@@ -292,15 +306,27 @@ var run = function() {
       fs.mkdir(file_dir, function(err) {
         if (err) throw err;
         console.log('Created directory: ' + file_dir);
-        run();
+        return callback();
       });
     }
   }
 
-  if (argv.s || stream != null)
-    retrieveSRWResult(srw_config, function(xml) {
-      parse(xml);
-    });
+  return callback();
+}
+
+var run = function() {
+   if(argv.f != "json")
+   createStream(function() {
+     if (argv.s || stream != null)
+      retrieveSRWResult(srw_config, function(xml) {
+        parse(xml);
+      });
+   });
+   else
+      retrieveSRWResult(srw_config, function(xml) {
+        parse(xml);
+      });
+
 }
 
 module.exports = run;

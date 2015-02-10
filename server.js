@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var app = require('express')(),
   fork = require('child_process').fork;
 
