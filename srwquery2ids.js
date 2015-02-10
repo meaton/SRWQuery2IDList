@@ -48,7 +48,7 @@ var ns_obj = {
   'sru-zr': 'http://www.loc.gov/zing/srw/',
   'escidocItem': 'http://www.escidoc.de/schemas/item/0.10',
   'escidocMetadataRecords': 'http://www.escidoc.de/schemas/metadatarecords/0.5',
-  'escidocContainer': 'http://wwww.escidoc.de/schemas/container/0.4',
+  'container': 'http://www.escidoc.de/schemas/container/0.9',
   'escidocContentStreams': 'http://www.escidoc.de/schemas/contentstreams/0.7',
   'escidocComponents': 'http://www.escidoc.de/schemas/components/0.9',
   'version': 'http://escidoc.de/core/01/properties/version/',
@@ -59,22 +59,26 @@ var ns_obj = {
   'xlink': 'http://www.w3.org/1999/xlink'
 };
 
-var getItemProperties = function(item, callback) {
+var getProperties = function(obj, callback) {
   var props = {}; // Properties object
-  var xpathRoot = (item.name() == 'item') ? 'escidocItem:properties/' : '';
+  props.name = obj.name();
 
-	var escidocID_href = item.attr('href').value();
+  var xpathRoot = '';
+  if(props.name == 'item') xpathRoot = 'escidocItem:properties/'
+  else if(props.name == 'container') xpathRoot = 'container:properties/';
+
+	var escidocID_href = obj.attr('href').value();
   props.escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
 	if(props.escidocID.indexOf('properties') != -1) props.escidocID = props.escidocID.substring(0, props.escidocID.indexOf('properties')-1);
 
-  var contentModelID_href = item.get(xpathRoot + 'srel:content-model', ns_obj).attr('href').value();
+  var contentModelID_href = obj.get(xpathRoot + 'srel:content-model', ns_obj).attr('href').value();
   props.contentModelID = contentModelID_href.substring(contentModelID_href.indexOf('dkclarin'), contentModelID_href.length);
 
-  var obj_pid = item.get(xpathRoot + 'prop:pid', ns_obj);
-	var ver_pid = item.get(xpathRoot + 'prop:version/version:pid', ns_obj);
-  props.ver_no = item.get(xpathRoot + 'prop:latest-version/version:number', ns_obj).text();
+  var obj_pid = obj.get(xpathRoot + 'prop:pid', ns_obj);
+	var ver_pid = obj.get(xpathRoot + 'prop:version/version:pid', ns_obj);
+  props.ver_no = obj.get(xpathRoot + 'prop:latest-version/version:number', ns_obj).text();
 
-  var last_date = item.attr('last-modification-date').value();
+  var last_date = obj.attr('last-modification-date').value();
 
   props.pid = "none";
 
@@ -83,7 +87,7 @@ var getItemProperties = function(item, callback) {
   else if(obj_pid != null)
     props.pid = obj_pid.text();
 	else
-		console.error('No PID value found for item: ' + props.escidocID);
+		console.error('No PID value found for ' + props.name + ': ' + props.escidocID);
 
   if(validate) {
     if(validatePIDVersion(props)) { // PID must be in format of version PID
@@ -110,7 +114,7 @@ var validatePIDVersion = function(props, callback) {
 var parse = function(doc) {
   var totalRecords = doc.get('//sru-zr:numberOfRecords', ns_obj).text();
   var items = doc.find('//escidocItem:item', ns_obj);
-  var containers = doc.find('//escidocContainer:container', ns_obj);
+  var containers = doc.find('//container:container', ns_obj);
 
   console.log('Total records in query: ' + totalRecords);
 
@@ -124,7 +128,7 @@ var parse = function(doc) {
   items.forEach(function(item){
     // CSV format: item%{escidocID}%[{objectPID}}|{lastVersionPID}]%{versionNo}
     if (!annotationsOnly) {
-      getItemProperties(item, addMember);
+      getProperties(item, addMember);
     }
 
 		if(argv.a && item != null){
@@ -141,7 +145,14 @@ var parse = function(doc) {
             // retrieve properties for Annotation item from eSciDoc REST
             retrieveItemProperties(relationObjID, function(annoPropsItem) {
 							console.log('props xml: ' + annoPropsItem.toString());
-              getItemProperties(annoPropsItem.root(), addMember); // add annotation member to file
+              getProperties(annoPropsItem.root(),
+                function(props) {
+                  addMember(props);
+                  if(items.indexOf(index) >= items.length)
+                    if(Number(totalRecords) < (srw_config.limit + srw_config.start))
+                      if(argv.f == 'json')
+                        addMemberToFile(JSON.stringify(json_arr), stream);
+                }); // add annotation member to file
             });
           }
         }
@@ -150,16 +161,19 @@ var parse = function(doc) {
   });
 
   // TODO: Handle containers array
-  containers.forEach(function(container) {});
+  containers.forEach(function(container) {
+      if(!annotationsOnly)
+          getProperties(container, addMember);
+  });
 
   // iterate over complete SRW result set
-  if(Number(totalRecords) >= (srw_config.limit + srw_config.start)) {
+  if(Number(totalRecords) >= (srw_config.start + srw_config.limit)) {
     srw_config.start += srw_config.limit;
     retrieveSRWResult(srw_config, function(xml) {
       parse(xml);
     });
   } else {
-    if(argv.f == 'json')
+    if(!argv.a && argv.f == 'json')
       addMemberToFile(JSON.stringify(json_arr), stream); // write JSON object to output file
     //if(stream instanceof fs.WriteStream)
       //stream.destroySoon();
@@ -217,10 +231,10 @@ var ir_options = function(escidocID, path) {
 // append props to output file
 var addMember = function(props) {
   if (argv.f == 'csv' || argv.f == 'tsv')
-    addMemberToFile(['item', props.escidocID, props.contentModelID, props.pid, props.ver_no].join(delimiter) + '\n');
+    addMemberToFile([props.name, props.escidocID, props.contentModelID, props.pid, props.ver_no].join(delimiter) + '\n');
   else if (argv.f == 'json') // write output to JSON object
     json_arr.push({
-		  type: 'item',
+		  type: props.name,
 		  systemID: props.escidocID,
 		  contentModelID: props.contentModelID,
 		  PID: props.pid,

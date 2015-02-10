@@ -18,7 +18,7 @@ app.get('/srwquery2idlist', function(req, res) {
     file_data += message;
   });
   query.on('exit', function(code) {
-    if (code == 0) {
+    if (code == 0 && file_data.length > 0) {
       res.setHeader('Content-Type', getContentType(format));
       res.send(new Buffer(file_data));
     } else res.send(500, {
