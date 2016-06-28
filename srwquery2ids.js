@@ -159,7 +159,7 @@ var parse = function(doc) {
                      || relation_type.indexOf('hasDependent') != -1) { // add annotation member to file including parent ID (annotation)
             retrieveItemProperties(relationObjID, function(annoPropsItem) {
               getProperties(annoPropsItem.root(), "item", function(propsAnno) {
-                getProperties(item, function(props) { addMember(propsAnno, props.escidocID); });
+                getProperties(item, "item", function(props) { addMember(propsAnno, props.escidocID); });
               });
             });
           }
