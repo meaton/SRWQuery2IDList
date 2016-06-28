@@ -148,7 +148,7 @@ var parse = function(doc) {
               getProperties(annoPropsItem.root(),
                 function(props) {
                   addMember(props);
-                  if(items.indexOf(index) >= items.length)
+                  if(items.indexOf(item) >= items.length)
                     if(Number(totalRecords) < (srw_config.limit + srw_config.start))
                       if(argv.f == 'json')
                         createStream(function() { addMemberToFile(JSON.stringify(json_arr)); });
