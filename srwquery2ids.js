@@ -59,9 +59,9 @@ var ns_obj = {
   'xlink': 'http://www.w3.org/1999/xlink'
 };
 
-var getProperties = function(obj, callback) {
+var getProperties = function(obj, name, callback) {
   var props = {}; // Properties object
-  props.name = obj.name();
+  props.name = (name == null) ? obj.name() : name;
 
   var xpathRoot = '';
   if(props.name == 'item') xpathRoot = 'escidocItem:properties/'
@@ -128,7 +128,7 @@ var parse = function(doc) {
   items.forEach(function(item){
     // CSV format: item%{escidocID}%[{objectPID}}|{lastVersionPID}]%{versionNo}
     if (!annotationsOnly) {
-      getProperties(item, addMember);
+      getProperties(item, item.name(), addMember);
     }
 
 		if(argv.a && item != null){
@@ -145,7 +145,7 @@ var parse = function(doc) {
             // retrieve properties for Annotation item from eSciDoc REST
             retrieveItemProperties(relationObjID, function(annoPropsItem) {
 							console.log('props xml: ' + annoPropsItem.toString());
-              getProperties(annoPropsItem.root(),
+              getProperties(annoPropsItem.root(), "item",
                 function(props) {
                   addMember(props);
                   if(items.indexOf(item) >= items.length)
@@ -158,7 +158,7 @@ var parse = function(doc) {
                      || relation_type.indexOf('isDependentOf') != -1
                      || relation_type.indexOf('hasDependent') != -1) { // add annotation member to file including parent ID (annotation)
             retrieveItemProperties(relationObjID, function(annoPropsItem) {
-              getProperties(annoPropsItem.root(), function(propsAnno) {
+              getProperties(annoPropsItem.root(), "item", function(propsAnno) {
                 getProperties(item, function(props) { addMember(propsAnno, props.escidocID); });
               });
             });
@@ -171,7 +171,7 @@ var parse = function(doc) {
   // TODO: Handle containers array
   containers.forEach(function(container) {
       if(!annotationsOnly)
-          getProperties(container, addMember);
+          getProperties(container, container.name(), addMember);
   });
 
   // iterate over complete SRW result set
