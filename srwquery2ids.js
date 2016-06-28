@@ -63,10 +63,11 @@ var getProperties = function(obj, name, callback) {
   var props = {}; // Properties object
   props.name = (name == null) ? obj.name() : name;
 
-  var xpathRoot = '';
+  var xpathRoot = '//';
+  /*
   if(props.name == 'item') xpathRoot = 'escidocItem:properties/'
   else if(props.name == 'container') xpathRoot = 'container:properties/';
-
+  */
 	var escidocID_href = obj.attr('href').value();
   props.escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
 	if(props.escidocID.indexOf('properties') != -1) props.escidocID = props.escidocID.substring(0, props.escidocID.indexOf('properties')-1);
@@ -145,7 +146,7 @@ var parse = function(doc) {
             // retrieve properties for Annotation item from eSciDoc REST
             retrieveItemProperties(relationObjID, function(annoPropsItem) {
 							console.log('props xml: ' + annoPropsItem.toString());
-              getProperties(annoPropsItem.root(), "item",
+              getProperties(annoPropsItem.root(), "annotation",
                 function(props) {
                   addMember(props);
                   if(items.indexOf(item) >= items.length)
@@ -158,7 +159,7 @@ var parse = function(doc) {
                      || relation_type.indexOf('isDependentOf') != -1
                      || relation_type.indexOf('hasDependent') != -1) { // add annotation member to file including parent ID (annotation)
             retrieveItemProperties(relationObjID, function(annoPropsItem) {
-              getProperties(annoPropsItem.root(), "item", function(propsAnno) {
+              getProperties(annoPropsItem.root(), "annotation", function(propsAnno) {
                 getProperties(item, "item", function(props) { addMember(propsAnno, props.escidocID); });
               });
             });
