@@ -63,7 +63,7 @@ var getProperties = function(obj, name, callback) {
   var props = {}; // Properties object
   props.name = (name == null) ? obj.name() : name;
 
-  var xpathRoot = '//';
+  var xpathRoot = '*/';
   /*
   if(props.name == 'item') xpathRoot = 'escidocItem:properties/'
   else if(props.name == 'container') xpathRoot = 'container:properties/';
