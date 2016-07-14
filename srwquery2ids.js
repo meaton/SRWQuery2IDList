@@ -63,11 +63,12 @@ var getProperties = function(obj, name, callback) {
   var props = {}; // Properties object
   props.name = (name == null) ? obj.name() : name;
 
-  var xpathRoot = '*/';
+  var xpathRoot = (obj.parent() != null) ? '*/' : '//';
   /*
   if(props.name == 'item') xpathRoot = 'escidocItem:properties/'
   else if(props.name == 'container') xpathRoot = 'container:properties/';
   */
+
 	var escidocID_href = obj.attr('href').value();
   props.escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
 	if(props.escidocID.indexOf('properties') != -1) props.escidocID = props.escidocID.substring(0, props.escidocID.indexOf('properties')-1);
