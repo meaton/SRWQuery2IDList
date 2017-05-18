@@ -5,7 +5,7 @@
   "main": "./srwquery2json.js",
   "bin": { "srwquery2idlist": "bin/main" },
   "dependencies": {
-    "libxmljs": "~0.14.0",
+    "libxmljs": "~0.18.0",
     "utile": "~0.1.5",
     "express": "~3.4.8",
     "minimist": "~0.0.8"

@@ -22,7 +22,7 @@ var argv = require('minimist')(process.argv.slice(2), {
     'f': 'format',
     'h': 'host',
     's': 'stream',
-		'i': 'include-all',
+    'i': 'include-all',
     'a': 'include-anno',
     'p': 'validate-pids',
   },
@@ -61,14 +61,14 @@ var ns_obj = {
 
 var getProperties = function(obj, name, callback) {
   var props = {}; // Properties object
+  props.parent = obj.parent();
   props.name = (name == null) ? obj.name() : name;
 
-  var xpathRoot = (obj.parent() != null) ? '*/' : '//';
+  var xpathRoot = (obj.parent() != null && obj.parent().type() == "document") ? '//' : '*/';
   /*
   if(props.name == 'item') xpathRoot = 'escidocItem:properties/'
   else if(props.name == 'container') xpathRoot = 'container:properties/';
   */
-
 	var escidocID_href = obj.attr('href').value();
   props.escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
 	if(props.escidocID.indexOf('properties') != -1) props.escidocID = props.escidocID.substring(0, props.escidocID.indexOf('properties')-1);
@@ -213,7 +213,7 @@ var execGET = function(options, callback) {
         throw new Error("Error code: " + res.statusCode);
     });
   }).on('error', function(e) {
-    console.error(e);
+    console.error(e, options.path);
   });
 
   return true;
