@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "description": "Convert eSciDoc SRW query result to ID list.",
   "main": "./srwquery2json.js",
-  "bin": { "srwquery2idlist": "bin/main" },
+  "bin": {
+    "srwquery2idlist": "bin/main"
+  },
   "dependencies": {
-    "libxmljs": "~0.18.0",
-    "utile": "~0.1.5",
     "express": "~3.4.8",
-    "minimist": "~0.0.8"
+    "libxmljs": "~0.18.0",
+    "minimist": "~0.0.8",
+    "q": "^1.5.0",
+    "utile": "~0.1.5"
   },
   "devDependencies": {},
   "scripts": {
