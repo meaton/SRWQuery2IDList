@@ -1,6 +1,6 @@
 {
   "name": "SRWQuery2IDList",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Convert eSciDoc SRW query result to ID list.",
   "main": "./srwquery2json.js",
   "bin": {
