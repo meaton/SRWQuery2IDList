@@ -80,8 +80,6 @@ var getProperties = function(obj, name, callback) {
     var contentModelID_href = obj.get(xpathRoot + 'srel:content-model', ns_obj).attr('href').value();
     props.contentModelID = contentModelID_href.substring(contentModelID_href.indexOf('dkclarin'), contentModelID_href.length);
 
-    console.log('xpathRoot: ', xpathRoot);
-
     var obj_pid = obj.get(xpathRoot + 'prop:pid', ns_obj);
     var ver_pid = obj.get(xpathRoot + 'prop:version/version:pid', ns_obj);
     props.ver_no = obj.get(xpathRoot + 'prop:latest-version/version:number', ns_obj).text();
@@ -139,18 +137,16 @@ var parse = function(doc) {
         console.error('Found 0 containers in XMLDocument.');
 
     //Add containers to the list
-    for (var i = 0; i < containers.length; i++) {
-        var container = containers[i];
+    containers.forEach(function(container) {
         return Q.when(getProperties(container, container.name()), function(props) {
             console.log('retrieved container props data', props.escidocID);
             addMember(props);
         });
-    }
+    });
 
     // Add the items to list
     // CSV format: item%{escidocID}%[{objectPID}}|{lastVersionPID}]%{versionNo}
-    for (var i = 0; i < items.length; i++) {
-        var item = items[i];
+    items.forEach(function(item) {
         if (!annotationsOnly) {
             Q.when(getProperties(item, item.name()), function(props) {
                 console.log('retrieved item props data', props.escidocID);
@@ -203,7 +199,7 @@ var parse = function(doc) {
                     promises.push(promise);
             });
         }
-    }
+    });
 
     return Q.allSettled(promises).done(function() {
         // iterate over complete SRW result set
