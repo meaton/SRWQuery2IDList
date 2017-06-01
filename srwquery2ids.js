@@ -68,7 +68,7 @@ var getProperties = function(obj, name, callback) {
     props.name = (name == null) ? obj.name() : name;
 
     var xpathRoot = '//';
-    if (props.name == 'item' || props.name == 'annotation') xpathRoot = 'escidocItem:properties/'
+    if (props.name == 'item') xpathRoot = 'escidocItem:properties/'
     else if (props.name == 'container') xpathRoot = 'container:properties/';
 
     var escidocID_href = obj.attr('href').value();
