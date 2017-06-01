@@ -67,7 +67,9 @@ var getProperties = function(obj, name, callback) {
     props.parent = obj.parent();
     props.name = (name == null) ? obj.name() : name;
 
-    var xpathRoot = (obj.parent() != null) ? '//' : '*/';
+    var xpathRoot = '//';
+    if (props.name == 'item' || props.name == 'annotation') xpathRoot = 'escidocItem:properties/'
+    else if (props.name == 'container') xpathRoot = 'container:properties/';
 
     var escidocID_href = obj.attr('href').value();
     props.escidocID = escidocID_href.substring(escidocID_href.indexOf('dkclarin'), escidocID_href.length);
@@ -77,6 +79,8 @@ var getProperties = function(obj, name, callback) {
 
     var contentModelID_href = obj.get(xpathRoot + 'srel:content-model', ns_obj).attr('href').value();
     props.contentModelID = contentModelID_href.substring(contentModelID_href.indexOf('dkclarin'), contentModelID_href.length);
+
+    console.log('xpathRoot: ', xpathRoot);
 
     var obj_pid = obj.get(xpathRoot + 'prop:pid', ns_obj);
     var ver_pid = obj.get(xpathRoot + 'prop:version/version:pid', ns_obj);
@@ -135,16 +139,18 @@ var parse = function(doc) {
         console.error('Found 0 containers in XMLDocument.');
 
     //Add containers to the list
-    containers.forEach(function(container) {
+    for (var i = 0; i < containers.length; i++) {
+        var container = containers[i];
         return Q.when(getProperties(container, container.name()), function(props) {
             console.log('retrieved container props data', props.escidocID);
             addMember(props);
         });
-    });
+    }
 
     // Add the items to list
     // CSV format: item%{escidocID}%[{objectPID}}|{lastVersionPID}]%{versionNo}
-    items.forEach(function(item) {
+    for (var i = 0; i < items.length; i++) {
+        var item = items[i];
         if (!annotationsOnly) {
             Q.when(getProperties(item, item.name()), function(props) {
                 console.log('retrieved item props data', props.escidocID);
@@ -197,7 +203,7 @@ var parse = function(doc) {
                     promises.push(promise);
             });
         }
-    });
+    }
 
     return Q.allSettled(promises).done(function() {
         // iterate over complete SRW result set
