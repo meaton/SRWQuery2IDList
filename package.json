@@ -4,7 +4,8 @@
   "description": "Convert eSciDoc SRW query result to ID list.",
   "main": "srwquery2json.js",
   "bin": {
-    "srwquery2idlist": "./bin/main"
+    "srwquery2idlist": "./bin/main",
+    "srwquery2idlist-server": "./bin/server"
   },
   "dependencies": {
     "express": "~3.4.8",

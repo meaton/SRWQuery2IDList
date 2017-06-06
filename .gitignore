@@ -1,3 +1,4 @@
-output
-node_modules/
+npm-debug.log
 nohup.out
+output/
+node_modules/
